@@ -1,27 +1,30 @@
 // pull in the express package
 const express = require('express');
-// add the logger
-const log = require('debug')('web:logging');
+
 // add another logger
 const error = require('debug')('web:error');
+// load in the axios middleware
+const API = require('./utils/API');
+// load routers
+const publicRoutes = require('./routes/public');
+const adminDecisionRoutes = require('./routes/adminDecisions');
+const adminOptionsRoutes = require('./routes/adminOptions');
 // create an express app
 const app = express();
 // setup a folder to hold all the static files
 app.use(express.static('public'));
-// example middleware that runs once for every request
-app.use((req, res, next) => {
-  log('\nRUNS ONCE FOR EVERY REQUEST');
-  setTimeout(() => { next(); }, 2000);
-}, (req, res, next) => {
-  log('WILL RUN WHEN NEXT IS CALLED');
-  next();
-});
-
-// route specific middleware
-app.use('/about', (req, res, next) => {
-  log('RUNS ONLY ON the /about page');
-  next(new Error('Not authorized'));
-});
+// checks to see if the content-type is url-encoded and parses it into req.body
+app.use(express.urlencoded({ extended: true }));
+// axios middleware
+app.use(API);
+// setting pug as the view engine
+app.set('view engine', 'pug');
+// set the view folder as the default place to render from
+app.set('views', `${__dirname}/views`);
+// setup routers
+app.use('/', publicRoutes);
+app.use('/admin/decisions', adminDecisionRoutes);
+app.use('/admin/options', adminOptionsRoutes);
 // four params are required to mark
 // this as a error handling middleware
 // the comment below this allows for eslint to not throw
